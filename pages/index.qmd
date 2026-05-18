@@ -1,9 +1,9 @@
 ---
-title: "League-Wide Kickoff Analysis for 2015-present"
+title: "Kick or Receive"
 format: html
 ---
 
-# Kick Or Receive
+# League-Wide Kickoff Analysis (2015-present)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
