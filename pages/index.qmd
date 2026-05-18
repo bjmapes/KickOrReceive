@@ -1,0 +1,15 @@
+---
+title: "Kick Or Receive"
+format: html
+---
+
+# Kick Or Receive
+
+```{r}
+library(nflfastR)
+library(dplyr)
+```
+
+```{r}
+plays <- load_pbp(2025)
+```

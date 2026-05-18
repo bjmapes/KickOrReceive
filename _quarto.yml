@@ -1,0 +1,9 @@
+project:
+  type: website
+  output-dir: docs
+
+render:
+  - pages/*.qmd
+
+website:
+  title: "Kick Or Receive"
