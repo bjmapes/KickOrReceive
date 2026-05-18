@@ -1,15 +1,76 @@
 ---
-title: "Kick Or Receive"
+title: "League-Wide Kickoff Analysis for 2015-present"
 format: html
 ---
 
 # Kick Or Receive
 
-```{r}
-library(nflfastR)
-library(dplyr)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
 ```
 
-```{r}
-plays <- load_pbp(2025)
+```{r load-packages}
+library(nflfastR)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r load-data}
+plays <- load_pbp(2015:nflreadr::most_recent_season())
+```
+
+```{r create-opening_kickoffs}
+opening_kickoffs <- plays |>
+  dplyr::filter(play_type == "kickoff") |>
+  dplyr::arrange(game_id, play_id) |>
+  dplyr::group_by(game_id) |>
+  dplyr::slice(1) |>
+  dplyr::ungroup()
+```
+
+```{r determine_winner}
+opening_kickoffs <- opening_kickoffs |>
+  dplyr::mutate(
+    winner = dplyr::case_when(
+      result > 0 ~ home_team,
+      result < 0 ~ away_team,
+      TRUE ~ "tie"
+    ),
+    receiving_win = posteam == winner,
+    receiving_home = posteam == home_team
+  )
+```
+
+```{r chart_home_away}
+opening_kickoffs |>
+  dplyr::filter(winner != "tie") |>
+  dplyr::mutate(
+    Team_Type = dplyr::if_else(receiving_home, "Home", "Away"),
+    initial_possession = "Received"
+  ) |>
+  dplyr::bind_rows(
+    opening_kickoffs |>
+      dplyr::filter(winner != "tie") |>
+      dplyr::mutate(
+        Team_Type = dplyr::if_else(receiving_home, "Away", "Home"),
+        initial_possession = "Kicked",
+        receiving_win = !receiving_win
+      )
+  ) |>
+  dplyr::group_by(Team_Type, initial_possession) |>
+  dplyr::summarise(
+    win_pct = mean(receiving_win),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = initial_possession, y = win_pct, fill = Team_Type)) +
+  geom_col(position = "dodge") +
+  labs(
+    x = "Initial Possession",
+    y = "Win Percentage",
+    fill = "Team"
+  )
 ```
