@@ -3,7 +3,7 @@ title: "Kick or Receive"
 format: html
 ---
 
-# League-Wide Kickoff Analysis (2015-present)
+### League-Wide Kickoff Analysis (2015-present)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -72,5 +72,89 @@ opening_kickoffs |>
     x = "Initial Possession",
     y = "Win Percentage",
     fill = "Team"
+  )
+```
+
+
+
+
+
+
+
+### By Team
+```{r chart_per_team, fig.width=14, fig.height=20}
+opening_kickoffs |>
+  dplyr::filter(winner != "tie") |>
+  dplyr::mutate(
+    Team = posteam,
+    Team_Type = dplyr::if_else(posteam == home_team, "Home", "Away"),
+    initial_possession = "Received",
+    team_win = posteam == winner
+  ) |>
+  dplyr::bind_rows(
+    opening_kickoffs |>
+      dplyr::filter(winner != "tie") |>
+      dplyr::mutate(
+        Team = defteam,
+        Team_Type = dplyr::if_else(defteam == home_team, "Home", "Away"),
+        initial_possession = "Kicked",
+        team_win = defteam == winner
+      )
+  ) |>
+  dplyr::group_by(Team, Team_Type, initial_possession) |>
+  dplyr::summarise(
+    win_pct = mean(team_win),
+    .groups = "drop"
+  ) |>
+  ggplot(
+    aes(
+      x = reorder(Team, win_pct),
+      y = win_pct,
+      fill = initial_possession
+    )
+  ) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  facet_wrap(~ Team_Type) +
+  labs(
+    x = "Team",
+    y = "Win Percentage",
+    fill = "Initial Possession"
+  )
+```
+
+
+
+### By Coach
+```{r chart_per_coach, fig.width=14, fig.height=70}
+opening_kickoffs |>
+  dplyr::filter(winner != "tie") |>
+  dplyr::mutate(
+    Coach = dplyr::if_else(posteam == home_team, home_coach, away_coach),
+    Team_Type = dplyr::if_else(posteam == home_team, "Home", "Away"),
+    initial_possession = "Received",
+    team_win = posteam == winner
+  ) |>
+  dplyr::bind_rows(
+    opening_kickoffs |>
+      dplyr::filter(winner != "tie") |>
+      dplyr::mutate(
+        Coach = dplyr::if_else(defteam == home_team, home_coach, away_coach),
+        Team_Type = dplyr::if_else(defteam == home_team, "Home", "Away"),
+        initial_possession = "Kicked",
+        team_win = defteam == winner
+      )
+  ) |>
+  dplyr::group_by(Coach, Team_Type, initial_possession) |>
+  dplyr::summarise(
+    win_pct = mean(team_win),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = initial_possession, y = win_pct)) +
+  geom_col() +
+  facet_wrap(~ Coach + Team_Type, ncol=6) +
+  labs(
+    x = "Initial Possession",
+    y = "Win Percentage"
   )
 ```
